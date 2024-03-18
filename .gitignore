@@ -1,0 +1,14 @@
+**/.DS_Store
+**/.terraform
+**/.terraform.lock.hcl
+**/.terraform.tfstate.lock.info
+**/*.tfstate
+**/*.tfstate.backup
+**/*.tar.gz
+**/temp_ip.txt
+**/temp_part2.txt
+**/temp_part4.txt
+**/config.yaml
+**/*.jar
+.idea
+dist/
