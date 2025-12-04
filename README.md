@@ -131,6 +131,8 @@ bbbbbbbbb   file    2022.02.22      system
 
 按你放到redc/utils/redc-templates/ 路径下的"文件夹名称"来
 
+每个场景的具体使用和命令请查看模板仓库 https://github.com/wgpsec/redc-template 里具体场景的 readme
+
 ---
 
 ## 设计规划
