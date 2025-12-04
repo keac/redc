@@ -12,17 +12,10 @@ builds:
     goarch:
       - amd64
       - arm64
-archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "v1.3"
+  name_template: "v1.0"
 changelog:
   sort: asc
   filters:

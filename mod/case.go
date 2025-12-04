@@ -2,6 +2,7 @@ package mod
 
 import (
 	"fmt"
+	"github.com/gen2brain/beeep"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/ini.v1"
 	"math/rand"
@@ -44,6 +45,7 @@ func CaseCreate(ProjectPath string, CaseName string, User string, Name string) {
 		os.Exit(3)
 	} else {
 		fmt.Println("Case 路径", u1.String())
+		fmt.Println("关闭命令: ./redc -stop ", u1.String())
 	}
 
 	// 在次 init,防止万一
@@ -56,16 +58,13 @@ func CaseCreate(ProjectPath string, CaseName string, User string, Name string) {
 		C2Apply(ProjectPath + "/" + u1.String())
 	} else if CaseName == "aws-proxy" {
 		AwsProxyApply(ProjectPath + "/" + u1.String())
-	} else if CaseName == "ddos" {
-		if Durl == "" {
-			fmt.Printf("ddos目标不可为空")
-			RedcLog("创建失败,ddos目标不可为空")
-			os.Exit(3)
-		}
-		DDOSApply(ProjectPath + "/" + u1.String())
 	} else if CaseName == "aliyun-proxy" {
 		AliyunProxyApply(ProjectPath + "/" + u1.String())
-	} else if CaseName == "dnslog" || CaseName == "xraydnslog" {
+	} else if CaseName == "asm" {
+		AsmApply(ProjectPath + "/" + u1.String())
+	} else if CaseName == "asm-node" {
+		AsmNodeApply(ProjectPath + "/" + u1.String())
+	} else if CaseName == "dnslog" || CaseName == "xraydnslog" || CaseName == "interactsh" {
 		if Domain == "360.com" {
 			fmt.Printf("创建dnslog时,域名不可为默认值")
 			RedcLog("创建失败,创建dnslog时,域名不可为默认值")
@@ -105,13 +104,18 @@ func CaseCreate(ProjectPath string, CaseName string, User string, Name string) {
 	} else if CaseName == "aws-proxy" {
 		// 写入节点数量到ini文件
 		cfg.Section(u1.String()).Key("Node").SetValue(strconv.Itoa(Node))
-	} else if CaseName == "ddos" {
-		// 写入节点数量到ini文件
-		cfg.Section(u1.String()).Key("Node").SetValue(strconv.Itoa(Node))
 	} else if CaseName == "aliyun-proxy" {
 		// 写入节点数量到ini文件
 		cfg.Section(u1.String()).Key("Node").SetValue(strconv.Itoa(Node))
-	} else if CaseName == "dnslog" || CaseName == "xraydnslog" {
+	} else if CaseName == "asm" {
+		// 写入节点数量到ini文件
+		cfg.Section(u1.String()).Key("Node").SetValue(strconv.Itoa(Node))
+	} else if CaseName == "asm-node" {
+		// 写入节点数量到ini文件
+		cfg.Section(u1.String()).Key("Node").SetValue(strconv.Itoa(Node))
+		cfg.Section(u1.String()).Key("Doamin").SetValue(Domain)
+		cfg.Section(u1.String()).Key("Doamin2").SetValue(Domain2)
+	} else if CaseName == "dnslog" || CaseName == "xraydnslog" || CaseName == "interactsh" {
 		// 写入域名到ini文件
 		cfg.Section(u1.String()).Key("Doamin").SetValue(Domain)
 	} else if CaseName == "pss5" || CaseName == "frp" || CaseName == "frp-loki" || CaseName == "nps" {
@@ -126,6 +130,9 @@ func CaseCreate(ProjectPath string, CaseName string, User string, Name string) {
 	}
 
 	fmt.Println("Case 路径", u1.String())
+	fmt.Println("关闭命令: ./redc -stop ", u1.String())
+	_ = beeep.Notify("redc", fmt.Sprintf("%v 场景创建完毕!", CaseName), "assets/information.png")
+
 }
 
 func CaseStop(ProjectPath string, UUID string) {
@@ -145,13 +152,18 @@ func CaseStop(ProjectPath string, UUID string) {
 	} else if cfg.Section(UUID).Key("Type").String() == "aws-proxy" {
 		AwsProxyDestroy(ProjectPath+"/"+UUID,
 			cfg.Section(UUID).Key("Node").String())
-	} else if cfg.Section(UUID).Key("Type").String() == "ddos" {
-		DDOSDestroy(ProjectPath+"/"+UUID,
-			cfg.Section(UUID).Key("Node").String())
 	} else if cfg.Section(UUID).Key("Type").String() == "aliyun-proxy" {
 		AliyunProxyDestroy(ProjectPath+"/"+UUID,
 			cfg.Section(UUID).Key("Node").String())
-	} else if cfg.Section(UUID).Key("Type").String() == "dnslog" || cfg.Section(UUID).Key("Type").String() == "xraydnslog" {
+	} else if cfg.Section(UUID).Key("Type").String() == "asm" {
+		AsmDestroy(ProjectPath+"/"+UUID,
+			cfg.Section(UUID).Key("Node").String())
+	} else if cfg.Section(UUID).Key("Type").String() == "asm-node" {
+		AsmNodeDestroy(ProjectPath+"/"+UUID,
+			cfg.Section(UUID).Key("Node").String(),
+			cfg.Section(UUID).Key("Domain").String(),
+			cfg.Section(UUID).Key("Domain2").String())
+	} else if cfg.Section(UUID).Key("Type").String() == "dnslog" || cfg.Section(UUID).Key("Type").String() == "xraydnslog" || cfg.Section(UUID).Key("Type").String() == "interactsh" {
 		DnslogDestroy(ProjectPath+"/"+UUID, cfg.Section(UUID).Key("Domain").String())
 	} else if cfg.Section(UUID).Key("Type").String() == "pss5" || cfg.Section(UUID).Key("Type").String() == "frp" || cfg.Section(UUID).Key("Type").String() == "frp-loki" || cfg.Section(UUID).Key("Type").String() == "nps" {
 		Base64Destroy(ProjectPath+"/"+UUID, cfg.Section(UUID).Key("Base64Command").String())
@@ -209,8 +221,16 @@ func CaseKill(ProjectPath string, UUID string) {
 	} else if cfg.Section(UUID).Key("Type").String() == "aliyun-proxy" {
 		AliyunProxyDestroy(ProjectPath+"/"+UUID,
 			cfg.Section(UUID).Key("Node").String())
-	} else if cfg.Section(UUID).Key("Type").String() == "dnslog" || cfg.Section(UUID).Key("Type").String() == "xraydnslog" {
-		DnslogDestroy(ProjectPath, cfg.Section(UUID).Key("Domain").String())
+	} else if cfg.Section(UUID).Key("Type").String() == "asm" {
+		AsmDestroy(ProjectPath+"/"+UUID,
+			cfg.Section(UUID).Key("Node").String())
+	} else if cfg.Section(UUID).Key("Type").String() == "asm-node" {
+		AsmNodeDestroy(ProjectPath+"/"+UUID,
+			cfg.Section(UUID).Key("Node").String(),
+			cfg.Section(UUID).Key("Domain").String(),
+			cfg.Section(UUID).Key("Domain2").String())
+	} else if cfg.Section(UUID).Key("Type").String() == "dnslog" || cfg.Section(UUID).Key("Type").String() == "xraydnslog" || cfg.Section(UUID).Key("Type").String() == "interactsh" {
+		DnslogDestroy(ProjectPath+"/"+UUID, cfg.Section(UUID).Key("Domain").String())
 	} else if cfg.Section(UUID).Key("Type").String() == "pss5" || cfg.Section(UUID).Key("Type").String() == "frp" || cfg.Section(UUID).Key("Type").String() == "frp-loki" || cfg.Section(UUID).Key("Type").String() == "nps" {
 		Base64Destroy(ProjectPath+"/"+UUID, cfg.Section(UUID).Key("Base64Command").String())
 	} else {
@@ -234,6 +254,7 @@ func CaseKill(ProjectPath string, UUID string) {
 	err = cfg2.SaveTo(filePath)
 	if err != nil {
 		fmt.Printf("修改 ini 时失败: %v", err)
+		_ = beeep.Notify("redc", fmt.Sprintf("修改 ini 时失败: %v", err), "assets/information.png")
 		os.Exit(3)
 	}
 }
@@ -251,6 +272,8 @@ func CaseChange(ProjectPath string, UUID string) {
 		C2Change(ProjectPath + "/" + UUID)
 	} else if cfg.Section(UUID).Key("Type").String() == "aliyun-proxy" {
 		AliyunProxyChange(ProjectPath + "/" + UUID)
+	} else if cfg.Section(UUID).Key("Type").String() == "asm" {
+		AsmChange(ProjectPath + "/" + UUID)
 	} else {
 		fmt.Printf("不适用与当前场景")
 		os.Exit(3)
